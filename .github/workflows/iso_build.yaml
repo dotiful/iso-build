@@ -171,8 +171,8 @@ jobs:
           SCOPE: ${{ matrix.SCOPE }}
           VERSION: ${{ steps.time.outputs.time }}-development
           ###### EDIT HERE ######
-          KERNEL: "linux511"
-          CODE_NAME: "Community-Build"
+          KERNEL: "linux510"
+          CODE_NAME: "Official-Build"
           #######################
         run: |                
           [ "$SCOPE" == "minimal" ] && unset SCOPE
