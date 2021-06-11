@@ -50,19 +50,19 @@ jobs:
         uses: styfle/cancel-workflow-action@0.8.0
         with:
           access_token: ${{ github.token }}
-      -
-        name: Checkout ISO-Profiles
-        run: |          
-          sudo git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git 
-      # - 
+      # -
       #   name: Checkout ISO-Profiles
-      #   uses: actions/checkout@v2
-      #   with:
-      #     ###### EDIT HERE ######
-      #     repository: dotiful/iso-profiles
-      #     #######################
-      #     token: "${{ secrets.GITHUB_TOKEN }}"
-      #     path: 'iso-profiles'
+      #   run: |          
+      #     sudo git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git 
+      - 
+        name: Checkout ISO-Profiles
+        uses: actions/checkout@v2
+        with:
+          ###### EDIT HERE ######
+          repository: dotiful/iso-profiles
+          #######################
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          path: 'iso-profiles'
 
       - 
         name: Get current time
