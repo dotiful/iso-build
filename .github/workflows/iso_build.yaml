@@ -50,19 +50,10 @@ jobs:
         uses: styfle/cancel-workflow-action@0.8.0
         with:
           access_token: ${{ github.token }}
-      # -
-      #   name: Checkout ISO-Profiles
-      #   run: |          
-      #     sudo git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git 
-      - 
+      -
         name: Checkout ISO-Profiles
-        uses: actions/checkout@v2
-        with:
-          ###### EDIT HERE ######
-          repository: dotiful/iso-profiles
-          #######################
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          path: 'iso-profiles'
+        run: |          
+          sudo git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git 
 
       - 
         name: Get current time
@@ -92,14 +83,8 @@ jobs:
           sudo make V=1
           sudo make install
           cd ..
-          sudo install -m644 pacman.conf.x86_64 /etc/pacman.conf
+          sudo install -m644 pacman.conf /etc/pacman.conf
           sudo install -m644 makepkg.conf /etc/
-          sudo sed -i /etc/makepkg.conf \
-            -e "s|@CARCH[@]|x86_64|g" \
-            -e "s|@CHOST[@]|x86_64-pc-linux-gnu|g" \
-            -e "s|@CARCHFLAGS[@]|-march=x86-64|g"
-          sudo install -m644 etc-pacman.d-gnupg.mount /usr/lib/systemd/system/etc-pacman.d-gnupg.mount
-          sudo install -m644 pacman-init.service /usr/lib/systemd/system/pacman-init.service
           sudo mkdir -p /etc/pacman.d
           sudo touch /etc/pacman.d/mirrorlist
           cd ..
