@@ -56,15 +56,15 @@ jobs:
       #   run: |          
       #     sudo git clone https://gitlab.manjaro.org/profiles-and-settings/iso-profiles.git 
           
-      - 
-        name: Checkout ISO-Profiles
-        uses: actions/checkout@v2
-        with:
-          ###### EDIT HERE ######
-          repository: dotiful/iso-profiles
-          #######################
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          path: 'iso-profiles'
+      # - 
+      #   name: Checkout ISO-Profiles
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ###### EDIT HERE ######
+      #     repository: dotiful/iso-profiles
+      #     #######################
+      #     token: "${{ secrets.GITHUB_TOKEN }}"
+      #     path: 'iso-profiles'
 
       - 
         name: Get current time
@@ -73,16 +73,16 @@ jobs:
         with:
           format: 'YY.MM'          
 
-      -
-        id: image-build
-          uses: manjaro/manjaro-iso-action@main
-          with:
-            edition: ${{ matrix.edition }}
-            branch: ${{ matrix.branch }}
-            scope: ${{ matrix.scope }}
-            version: ${{ steps.time.outputs.time }}-development
-            kernel: linux510
-            code-name: "Ornara"
+      - id: image-build
+        uses: manjaro/manjaro-iso-action@feat/better_checksums
+        with:
+          edition: ${{ matrix.edition }}
+          branch: ${{ matrix.branch }}
+          scope: ${{ matrix.scope }}
+          version: ${{ steps.time.outputs.time }}-development
+          kernel: linux510
+          code-name: "Ornara"
+          release-tag: ${{ needs.prepare-release.outputs.release_tag }}
 
       - 
         name: Upload Release
