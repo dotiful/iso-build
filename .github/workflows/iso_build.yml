@@ -1,40 +1,36 @@
 name: iso_build
 on:
-  repository_dispatch:
   workflow_dispatch:
+  # remove if you don't want to build on a schedule
   schedule:
     - cron:  '0 3 * * *'
+  # remove if you don't want to build when commits are pushed to you main/master branch
+  push:
+    branches:
+      - master
+      - main
 
 jobs:
-  prepare_release:
+  prepare-release:
     runs-on: ubuntu-20.04
     steps:
-      - 
-        uses: styfle/cancel-workflow-action@0.8.0
+      # cancel already running instances of the same action on the currently working on branch
+      - uses: styfle/cancel-workflow-action@0.9.0
         with:
           access_token: ${{ github.token }}
-      - 
-        id: time
+      - id: time
         uses: nanzm/get-time-action@v1.1
         with:
           format: 'YYYYMMDDHHmm'
-      - 
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.time.outputs.time }}
-          release_name: Release ${{ steps.time.outputs.time }}
-          draft: false
-          prerelease: false
     outputs:
+      # generate a common tag to be used in all elements of the matrix strategy
       upload_url: ${{ steps.release.outputs.upload_url }}
       release_id: ${{ steps.release.outputs.id }}
+      release_tag: ${{ steps.time.outputs.time }}
 
   release:
     runs-on: ubuntu-20.04
-    needs: prepare_release    
+    needs: prepare-release    
     strategy:
       matrix:
         ##### EDIT ME #####      
@@ -43,12 +39,11 @@ jobs:
         SCOPE: [minimal]
         ###################
     steps:
-      - 
-        uses: styfle/cancel-workflow-action@0.8.0
+      # cancel already running instances of the same action on the currently working on branch
+      - uses: styfle/cancel-workflow-action@0.9.0
         with:
           access_token: ${{ github.token }}
-      -
-        id: image-build
+      - id: image-build
         uses: manjaro/manjaro-iso-action@main
         with:
           iso-profiles-repo: 'https://github.com/dotiful/iso-profiles'
@@ -56,72 +51,16 @@ jobs:
           branch: ${{ matrix.branch }}
           scope: ${{ matrix.scope }}
           version: ${{ steps.time.outputs.time }}-dev
+          # version: "21.0"
           kernel: linux510
           code-name: "Ornara"
+          # providing a release-tag allows for github releases
           release-tag: ${{ needs.prepare-release.outputs.release_tag }}
-      
-      - 
-        id: upload_release_zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
-          asset_path: ./${{ steps.image-build.outputs.file-path }}.zip
-          asset_name: ${{ steps.image-build.outputs.file-path }}.zip
-          asset_content_type: application/zip
-      - 
-        id: check_files
-        uses: andstor/file-existence-action@v1
-        with:
-          files: ${{ steps.image-build.outputs.file-path }}.z01
-          allow_failure: false
-      
-      - 
-        id: upload_release_z01
-        uses: actions/upload-release-asset@v1
-        if: steps.check_files.outputs.files_exists == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
-          asset_path: ./${{ steps.image-build.outputs.file-path }}.z01
-          asset_name: ${{ steps.image-build.outputs.file-path }}.z01
-          asset_content_type: application/zip
-      - 
-        id: upload_sha256
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
-          asset_path: ./${{ steps.image-build.outputs.file-sha256 }}
-          asset_name: ${{ steps.image-build.outputs.file-sha256 }}
-          asset_content_type: text/plain
-      - 
-        id: upload_pkg
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
-          asset_path: ./${{ steps.image-build.outputs.file-pkg }}
-          asset_name: ${{ steps.image-build.outputs.file-pkg }}
-          asset_content_type: text/plain  
-
-      - 
-        name: rollback_release
-        if: failure()
-        uses: author/action-rollback@stable
-        with:
-          release_id: ${{ needs.prepare_release.outputs.release_id }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # - 
-      #   name: rollback github release
-      #   if: ${{ failure() || cancelled() }}
-      #   run: |
-      #     echo ${{ github.token }} | gh auth login --with-token
-      #     gh release delete ${{ needs.prepare-release.outputs.release_tag }} -y --repo ${{ github.repository }}
-      #     git push --delete origin ${{ needs.prepare-release.outputs.release_tag }}
+      # delete the github release in case of cancellation or failure
+      # refer to .github/workflows/cleanup-test-release.yml for rollback strategies concerning the other distribution channels
+      - name: rollback github release
+        if: ${{ failure() || cancelled() }}
+        run: |
+          echo ${{ github.token }} | gh auth login --with-token
+          gh release delete ${{ needs.prepare-release.outputs.release_tag }} -y --repo ${{ github.repository }}
+          git push --delete origin ${{ needs.prepare-release.outputs.release_tag }}
