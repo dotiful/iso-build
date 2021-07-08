@@ -12,30 +12,29 @@ jobs:
   prepare-release:
     runs-on: ubuntu-20.04
     steps:
-      # cancel already running instances of the same action on the currently working on branch
-      - uses: styfle/cancel-workflow-action@0.9.0
+      - 
+        uses: styfle/cancel-workflow-action@0.8.0
         with:
           access_token: ${{ github.token }}
-
-      - id: time
+      - 
+        id: time
         uses: nanzm/get-time-action@v1.1
         with:
           format: 'YYYYMMDDHHmm'
-
-      - id: release
+      - 
+        id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.time.outputs.time }}
-          release_name: ${{ steps.time.outputs.time }}
+          release_name: Release ${{ steps.time.outputs.time }}
           draft: false
           prerelease: false
-
     outputs:
-      release_tag: ${{ steps.time.outputs.time }}
       upload_url: ${{ steps.release.outputs.upload_url }}
       release_id: ${{ steps.release.outputs.id }}
+      release_tag: ${{ steps.time.outputs.time }}
 
   release:
     runs-on: ubuntu-20.04
@@ -48,54 +47,52 @@ jobs:
         SCOPE: [minimal]
         ###################
     steps:
-      # cancel already running instances of the same action on the currently working on branch
-      - uses: styfle/cancel-workflow-action@0.9.0
+      - 
+        uses: styfle/cancel-workflow-action@0.8.0
         with:
           access_token: ${{ github.token }}
-
-      - id: image-build
+      -
+        id: image-build
         uses: manjaro/manjaro-iso-action@main
         with:
           iso-profiles-repo: 'https://github.com/dotiful/iso-profiles'
           edition: ${{ matrix.edition }}
           branch: ${{ matrix.branch }}
           scope: ${{ matrix.scope }}
-          version: ${{ steps.time.outputs.time }}dev
+          version: ${{ steps.time.outputs.time }}-dev
           kernel: linux510
           code-name: "Ornara"
-          release-tag: Release ${{ needs.prepare-release.outputs.release_tag }}
+          release-tag: ${{ needs.prepare-release.outputs.release_tag }}
       
-      - name: upload-release
+      - 
         id: upload_release_zip
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          upload_url: ${{ needs.prepare-release.outputs.upload_url }}
           asset_path: ./${{ steps.image-build.outputs.file-path }}.zip
           asset_name: ${{ steps.image-build.outputs.file-path }}.zip
           asset_content_type: application/zip
-      
-      - name: check-for-split-zip
+      - 
         id: check_files
         uses: andstor/file-existence-action@v1
         with:
           files: ${{ steps.image-build.outputs.file-path }}.z01
           allow_failure: false
       
-      - name: upload-release
+      - 
         id: upload_release_z01
         uses: actions/upload-release-asset@v1
         if: steps.check_files.outputs.files_exists == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          upload_url: ${{ needs.prepare-release.outputs.upload_url }}
           asset_path: ./${{ steps.image-build.outputs.file-path }}.z01
           asset_name: ${{ steps.image-build.outputs.file-path }}.z01
           asset_content_type: application/zip
-      
-      - name: upload-checksum-file
+      - 
         id: upload_sha256
         uses: actions/upload-release-asset@v1
         env:
@@ -105,8 +102,7 @@ jobs:
           asset_path: ./${{ steps.image-build.outputs.file-sha256 }}
           asset_name: ${{ steps.image-build.outputs.file-sha256 }}
           asset_content_type: text/plain
-      
-      - name: upload-package-list
+      - 
         id: upload_pkg
         uses: actions/upload-release-asset@v1
         env:
@@ -115,17 +111,19 @@ jobs:
           upload_url: ${{ needs.prepare_release.outputs.upload_url }}
           asset_path: ./${{ steps.image-build.outputs.file-pkg }}
           asset_name: ${{ steps.image-build.outputs.file-pkg }}
-          asset_content_type: text/plain     
+          asset_content_type: text/plain  
 
-      - name: rollback-release
-        if: ${{ failure() || cancelled() }}
+      - 
+        name: rollback_release
+        if: failure()
         uses: author/action-rollback@stable
         with:
           release_id: ${{ needs.prepare_release.outputs.release_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: rollback
+      
+      # - 
+      #   name: rollback github release
       #   if: ${{ failure() || cancelled() }}
       #   run: |
       #     echo ${{ github.token }} | gh auth login --with-token
