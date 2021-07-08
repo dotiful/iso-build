@@ -2,7 +2,7 @@
 [![iso_build](https://github.com/dotiful/iso-build/workflows/iso_build/badge.svg)](https://github.com/dotiful/iso-build/actions)
 
 ## description
-My custom Manjaro Linux ISO
+Custom Manjaro KDE development builds based on Manjarolinux [kde-unstable] repo
 
 ## download an iso
 Images are built and uploaded to [github releases](https://github.com/dotiful/iso-build/releases)
