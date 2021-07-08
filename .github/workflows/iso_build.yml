@@ -52,10 +52,70 @@ jobs:
           kernel: linux510
           code-name: "Ornara"
           release-tag: Release ${{ needs.prepare-release.outputs.release_tag }}
-          
-      - name: rollback
-        if: ${{ failure() || cancelled() }}
-        run: |
-          echo ${{ github.token }} | gh auth login --with-token
-          gh release delete ${{ needs.prepare-release.outputs.release_tag }} -y --repo ${{ github.repository }}
-          git push --delete origin ${{ needs.prepare-release.outputs.release_tag }}
+      
+      - name: upload-release
+        id: upload_release_zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          asset_path: ./${{ steps.image-build.outputs.file-path }}.zip
+          asset_name: ${{ steps.image-build.outputs.file-path }}.zip
+          asset_content_type: application/zip
+      
+      - name: check-for-split-zip
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: ${{ steps.image-build.outputs.file-path }}.z01
+          allow_failure: false
+      
+      - name: upload-release
+        id: upload_release_z01
+        uses: actions/upload-release-asset@v1
+        if: steps.check_files.outputs.files_exists == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          asset_path: ./${{ steps.image-build.outputs.file-path }}.z01
+          asset_name: ${{ steps.image-build.outputs.file-path }}.z01
+          asset_content_type: application/zip
+      
+      - name: upload-checksum-file
+        id: upload_sha256
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          asset_path: ./${{ steps.image-build.outputs.file-sha256 }}
+          asset_name: ${{ steps.image-build.outputs.file-sha256 }}
+          asset_content_type: text/plain
+      
+      - name: upload-package-list
+        id: upload_pkg
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare_release.outputs.upload_url }}
+          asset_path: ./${{ steps.image-build.outputs.file-pkg }}
+          asset_name: ${{ steps.image-build.outputs.file-pkg }}
+          asset_content_type: text/plain     
+
+      - name: rollback-release
+        if: failure()
+        uses: author/action-rollback@stable
+        with:
+          release_id: ${{ needs.prepare_release.outputs.release_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: rollback
+      #   if: ${{ failure() || cancelled() }}
+      #   run: |
+      #     echo ${{ github.token }} | gh auth login --with-token
+      #     gh release delete ${{ needs.prepare-release.outputs.release_tag }} -y --repo ${{ github.repository }}
+      #     git push --delete origin ${{ needs.prepare-release.outputs.release_tag }}
