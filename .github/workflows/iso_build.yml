@@ -28,7 +28,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.time.outputs.time }}
-          release_name: Release ${{ steps.time.outputs.time }}
+          release_name: ${{ steps.time.outputs.time }}
           draft: false
           prerelease: false
 
@@ -118,7 +118,7 @@ jobs:
           asset_content_type: text/plain     
 
       - name: rollback-release
-        if: failure()
+        if: ${{ failure() || cancelled() }}
         uses: author/action-rollback@stable
         with:
           release_id: ${{ needs.prepare_release.outputs.release_id }}
