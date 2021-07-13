@@ -49,7 +49,7 @@ jobs:
           version: ${{ steps.time.outputs.time }}-dev
           kernel:  ${{ matrix.kernel }}
           code-name: "Ornara"
-          release-tag: ${{ needs.prepare-release.outputs.release_tag }}
+          release-tag: Release ${{ needs.prepare-release.outputs.release_tag }}
 
       - name: rollback github release
         if: ${{ failure() || cancelled() }}
