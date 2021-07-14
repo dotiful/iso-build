@@ -20,9 +20,9 @@ jobs:
         with:
           format: "YYYYMMDDHHmm"
     outputs:
-      upload_url: ${{ steps.release.outputs.upload_url }}
-      release_id: ${{ steps.release.outputs.id }}
       release_tag: ${{ steps.time.outputs.time }}
+      # upload_url: ${{ steps.release.outputs.upload_url }}
+      # release_id: ${{ steps.release.outputs.id }}
 
   release:
     runs-on: ubuntu-20.04
@@ -34,6 +34,7 @@ jobs:
         BRANCH: [stable]
         SCOPE: [minimal]
         KERNEL: [linux510]
+        VERSION: [21.0]
         ###################
     steps:
       - uses: styfle/cancel-workflow-action@0.9.0
@@ -46,7 +47,7 @@ jobs:
           edition: ${{ matrix.edition }}
           branch: ${{ matrix.branch }}
           scope: ${{ matrix.scope }}
-          version: ${{ steps.time.outputs.time }}-dev
+          version: ${{ matrix.version }}
           kernel:  ${{ matrix.kernel }}
           code-name: "Ornara"
           release-tag: ${{ needs.prepare-release.outputs.release_tag }}
