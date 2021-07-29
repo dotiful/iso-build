@@ -21,8 +21,6 @@ jobs:
           format: "YYYYMMDDHHmm"
     outputs:
       release_tag: ${{ steps.time.outputs.time }}
-      # upload_url: ${{ steps.release.outputs.upload_url }}
-      # release_id: ${{ steps.release.outputs.id }}
 
   release:
     runs-on: ubuntu-20.04
@@ -33,15 +31,15 @@ jobs:
         EDITION: [kde]
         BRANCH: [stable]
         SCOPE: [minimal]
-        KERNEL: [linux510]
-        VERSION: [21.0]
+        KERNEL: [linux513]
+        VERSION: [21.1.0]
         ###################
     steps:
       - uses: styfle/cancel-workflow-action@0.9.0
         with:
           access_token: ${{ github.token }}
       - id: image-build
-        uses: manjaro/manjaro-iso-action@v2
+        uses: manjaro/manjaro-iso-action@v2.3
         with:
           iso-profiles-repo: "https://github.com/dotiful/iso-profiles"
           edition: ${{ matrix.edition }}
@@ -49,7 +47,7 @@ jobs:
           scope: ${{ matrix.scope }}
           version: ${{ matrix.version }}
           kernel:  ${{ matrix.kernel }}
-          code-name: "Ornara"
+          code-name: "Pahvo"
           release-tag: ${{ needs.prepare-release.outputs.release_tag }}
 
       - name: rollback github release
