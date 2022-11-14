@@ -39,7 +39,7 @@ jobs:
         with:
           access_token: ${{ github.token }}
       - id: image-build
-        uses: manjaro/manjaro-iso-action@2.5
+        uses: manjaro/manjaro-iso-action@v2.8
         with:
           iso-profiles-repo: "https://github.com/dotiful/iso-profiles"
           edition: ${{ matrix.edition }}
